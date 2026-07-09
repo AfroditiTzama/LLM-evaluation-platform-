@@ -1,0 +1,56 @@
+Final LLM Evaluation Recommendation Summary
+======================================================================
+
+This final recommendation combines:
+- LLM-as-a-judge quality score
+- latency
+- estimated cost
+- heuristic failure rate
+- possible truncations
+
+The quality scores are based on the balanced judged sample, not the full 1080 rows unless the judge was run on all rows.
+
+Overall recommendation
+----------------------------------------------------------------------
+Best balanced model: MiniMax M2.7
+Final score: 0.9603
+Judge quality: 9.133/10
+Average latency: 13.655s
+Estimated cost / 1000 prompts: $1.1377
+Failure rate: 0.283
+
+Specialized winners
+----------------------------------------------------------------------
+Best quality: Qwen 3.7 Plus (9.167/10)
+Lowest cost: MiniMax M2.7 ($1.1377 / 1000 prompts)
+Fastest: MiniMax M3 (9.793s average latency)
+Lowest failure rate: MiniMax M3 (0.278)
+
+Recommended model by use case
+----------------------------------------------------------------------
+customer_support: MiniMax M2.7
+  Final score: 0.8370
+  Judge quality: 9.800/10
+  Latency: 5.660s
+  Cost / 1000 prompts: $0.4404
+  Failure rate: 0.067
+
+document_understanding: MiniMax M2.5
+  Final score: 0.9998
+  Judge quality: 10.000/10
+  Latency: 3.658s
+  Cost / 1000 prompts: $0.3612
+  Failure rate: 0.200
+
+website_generation: MiniMax M2.7
+  Final score: 0.9489
+  Judge quality: 7.700/10
+  Latency: 30.250s
+  Cost / 1000 prompts: $2.6215
+  Failure rate: 0.583
+
+Interpretation
+----------------------------------------------------------------------
+The best strategy is not necessarily one model for all tasks.
+A model-routing setup can select a stronger model for quality-sensitive tasks and a cheaper/faster model for simpler tasks.
+The final production choice should also consider provider stability, rate limits, and more human evaluation if available.

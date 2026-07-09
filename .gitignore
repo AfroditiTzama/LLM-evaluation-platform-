@@ -1,0 +1,8 @@
+.env
+__pycache__/
+*.pyc
+llm_eval.db
+runs/
+uploaded_prompts/
+.DS_Store
+.streamlit/secrets.toml
