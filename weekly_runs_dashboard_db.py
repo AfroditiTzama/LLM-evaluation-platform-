@@ -448,8 +448,10 @@ def main():
 
     render_new_evaluation_form()
 
+    db_url = get_database_url()
+    db_type = "PostgreSQL" if db_url.startswith("postgresql") else "SQLite"
     st.sidebar.write("Database:")
-    st.sidebar.code(get_database_url())
+    st.sidebar.success(f"{db_type} connected")
 
     runs = read_table("runs")
 
