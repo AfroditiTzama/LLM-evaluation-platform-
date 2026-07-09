@@ -395,7 +395,43 @@ st.markdown(
 )
 
 
+
+def require_password():
+    app_password = os.getenv("APP_PASSWORD")
+
+    if not app_password:
+        st.warning("APP_PASSWORD is not set. The app is currently unprotected.")
+        return True
+
+    if "authenticated" not in st.session_state:
+        st.session_state["authenticated"] = False
+
+    if st.session_state["authenticated"]:
+        return True
+
+    st.markdown(
+        """
+        <div class="hero-title">LLM Evaluation Platform</div>
+        <div class="hero-subtitle">Enter the access password to continue.</div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    password = st.text_input("Password", type="password")
+
+    if st.button("Login"):
+        if password == app_password:
+            st.session_state["authenticated"] = True
+            st.rerun()
+        else:
+            st.error("Wrong password.")
+
+    return False
+
 def main():
+    if not require_password():
+        return
+
     st.markdown(
         """
         <div class="hero-title">
