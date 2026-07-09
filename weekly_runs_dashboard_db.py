@@ -428,8 +428,220 @@ def require_password():
 
     return False
 
+
+def read_static_csv(filename):
+    path = Path(filename)
+
+    if not path.exists() or path.stat().st_size == 0:
+        return pd.DataFrame()
+
+    try:
+        return pd.read_csv(path)
+    except Exception:
+        return pd.DataFrame()
+
+
+def render_static_benchmark_dashboard():
+    st.markdown(
+        """
+        <div class="hero-title">
+            Static Benchmark<br>
+            180 Prompt Evaluation
+        </div>
+        <div class="hero-subtitle">
+            Original benchmark dashboard for the fixed evaluation set:
+            180 prompts per model, 6 models and 3 use cases.
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    logs = read_static_csv("all_model_logs_merged_fixed.csv")
+    metrics = add_model_label(read_static_csv("metrics_by_model.csv"))
+    costs = add_model_label(read_static_csv("cost_analysis_by_model.csv"))
+    failures = add_model_label(read_static_csv("failure_summary_by_model.csv"))
+    judge = add_model_label(read_static_csv("judge_summary_by_model.csv"))
+    final = add_model_label(read_static_csv("final_recommendations_overall.csv"))
+    final_usecase = add_model_label(read_static_csv("final_recommendations_by_usecase.csv"))
+
+    if logs.empty:
+        st.warning("Static benchmark CSV files were not found in the deployed project.")
+        return
+
+    total_responses = len(logs)
+    total_models = logs["model"].nunique() if "model" in logs.columns else "N/A"
+
+    if "prompt_id" in logs.columns:
+        total_prompts = logs["prompt_id"].nunique()
+    elif "question" in logs.columns:
+        total_prompts = logs["question"].nunique()
+    else:
+        total_prompts = "N/A"
+
+    if not final.empty and "final_score" in final.columns:
+        best_row = final.sort_values("final_score", ascending=False).iloc[0]
+        best_model = best_row["model_label"]
+        best_score = f"{best_row['final_score']:.4f}"
+    else:
+        best_model = "N/A"
+        best_score = "N/A"
+
+    c1, c2, c3, c4 = st.columns(4)
+
+    with c1:
+        kpi_card("Total Responses", total_responses, "Static benchmark outputs")
+    with c2:
+        kpi_card("Models", total_models, "Compared LLMs")
+    with c3:
+        kpi_card("Prompts", total_prompts, "Fixed prompt set")
+    with c4:
+        kpi_card("Best Balanced", best_model, f"Score: {best_score}")
+
+    st.markdown('<div class="section-title">Benchmark Results</div>', unsafe_allow_html=True)
+
+    if not final.empty and "final_score" in final.columns:
+        st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+
+        fig = px.bar(
+            final.sort_values("final_score", ascending=True),
+            x="final_score",
+            y="model_label",
+            orientation="h",
+            color="model_label",
+            title="Final Benchmark Score by Model",
+            color_discrete_sequence=COLORS,
+            labels=CHART_LABELS,
+        )
+        fig.update_layout(showlegend=False)
+        fig = style_fig(fig)
+        st.plotly_chart(fig, use_container_width=True)
+
+        st.markdown("</div>", unsafe_allow_html=True)
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        if not metrics.empty and "avg_latency" in metrics.columns:
+            st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+
+            fig = px.bar(
+                metrics.sort_values("avg_latency"),
+                x="model_label",
+                y="avg_latency",
+                color="model_label",
+                title="Average Latency by Model",
+                color_discrete_sequence=COLORS,
+                labels=CHART_LABELS,
+            )
+            fig.update_layout(showlegend=False)
+            fig = style_fig(fig)
+            st.plotly_chart(fig, use_container_width=True)
+
+            st.markdown("</div>", unsafe_allow_html=True)
+
+    with col2:
+        if not costs.empty and "estimated_cost_per_1000_prompts_usd" in costs.columns:
+            st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+
+            fig = px.bar(
+                costs.sort_values("estimated_cost_per_1000_prompts_usd"),
+                x="model_label",
+                y="estimated_cost_per_1000_prompts_usd",
+                color="model_label",
+                title="Estimated Cost per 1,000 Prompts",
+                color_discrete_sequence=COLORS,
+                labels=CHART_LABELS,
+            )
+            fig.update_layout(showlegend=False)
+            fig = style_fig(fig)
+            st.plotly_chart(fig, use_container_width=True)
+
+            st.markdown("</div>", unsafe_allow_html=True)
+
+    col3, col4 = st.columns(2)
+
+    with col3:
+        if not judge.empty and "avg_overall_quality" in judge.columns:
+            st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+
+            fig = px.bar(
+                judge.sort_values("avg_overall_quality"),
+                x="avg_overall_quality",
+                y="model_label",
+                orientation="h",
+                color="model_label",
+                title="Judge Overall Quality",
+                color_discrete_sequence=COLORS,
+                labels=CHART_LABELS,
+            )
+            fig.update_layout(showlegend=False)
+            fig = style_fig(fig)
+            st.plotly_chart(fig, use_container_width=True)
+
+            st.markdown("</div>", unsafe_allow_html=True)
+
+    with col4:
+        if not failures.empty and "failure_rate" in failures.columns:
+            st.markdown('<div class="chart-card">', unsafe_allow_html=True)
+
+            fig = px.bar(
+                failures.sort_values("failure_rate"),
+                x="model_label",
+                y="failure_rate",
+                color="model_label",
+                title="Heuristic Failure Rate",
+                color_discrete_sequence=COLORS,
+                labels=CHART_LABELS,
+            )
+            fig.update_layout(showlegend=False)
+            fig = style_fig(fig)
+            st.plotly_chart(fig, use_container_width=True)
+
+            st.markdown("</div>", unsafe_allow_html=True)
+
+    tab1, tab2, tab3, tab4, tab5 = st.tabs(
+        [
+            "Overall Recommendations",
+            "Use Case Recommendations",
+            "Metrics",
+            "Judge Scores",
+            "Raw Logs",
+        ]
+    )
+
+    with tab1:
+        if not final.empty:
+            st.dataframe(final, use_container_width=True)
+        else:
+            st.info("No final recommendation file found.")
+
+    with tab2:
+        if not final_usecase.empty:
+            st.dataframe(final_usecase, use_container_width=True)
+        else:
+            st.info("No use-case recommendation file found.")
+
+    with tab3:
+        st.dataframe(metrics, use_container_width=True)
+
+    with tab4:
+        st.dataframe(judge, use_container_width=True)
+
+    with tab5:
+        st.dataframe(logs, use_container_width=True)
+
 def main():
     if not require_password():
+        return
+
+    dashboard_mode = st.sidebar.radio(
+        "Dashboard mode",
+        ["Weekly / Custom Evaluations", "Static Benchmark"],
+        index=0,
+    )
+
+    if dashboard_mode == "Static Benchmark":
+        render_static_benchmark_dashboard()
         return
 
     st.markdown(
