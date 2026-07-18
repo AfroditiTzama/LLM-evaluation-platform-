@@ -1,3 +1,15 @@
+# Free Render deployment with Turso
+
+This version uses a free Render Web Service and a remote Turso database. No Render persistent disk is required.
+
+Required Render environment variables:
+
+- `TURSO_DATABASE_URL`
+- `TURSO_AUTH_TOKEN`
+- `APP_PASSWORD`
+
+The app uses local SQLite when the Turso variables are absent and Turso Cloud when both are present.
+
 # Hosting στο Render με SQLite
 
 ## Γιατί χρειάζεται persistent disk

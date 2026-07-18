@@ -12,12 +12,25 @@ DEFAULT_DB_PATH = BASE_DIR / "data" / "llm_eval.db"
 SEED_DB_PATH = BASE_DIR / "seed" / "llm_eval_seed.db"
 
 
+def turso_enabled() -> bool:
+    return bool(os.getenv("TURSO_DATABASE_URL", "").strip() and os.getenv("TURSO_AUTH_TOKEN", "").strip())
+
+
 def get_database_path() -> Path:
     raw = os.getenv("DATABASE_PATH", "").strip()
     return Path(raw).expanduser() if raw else DEFAULT_DB_PATH
 
 
-def ensure_database_file(path: Path | None = None) -> Path:
+def database_label(path: Path | None = None) -> str:
+    if turso_enabled():
+        return os.getenv("TURSO_DATABASE_URL", "Turso Cloud")
+    return str(path or get_database_path())
+
+
+def ensure_database_file(path: Path | None = None) -> Path | None:
+    if turso_enabled():
+        initialize_database(None)
+        return None
     target = path or get_database_path()
     target.parent.mkdir(parents=True, exist_ok=True)
     if not target.exists() and SEED_DB_PATH.exists() and target.resolve() != SEED_DB_PATH.resolve():
@@ -26,12 +39,26 @@ def ensure_database_file(path: Path | None = None) -> Path:
     return target
 
 
-def connect(path: Path | None = None, *, readonly: bool = False) -> sqlite3.Connection:
-    db_path = ensure_database_file(path)
+def _open_connection(path: Path | None = None, *, readonly: bool = False):
+    if turso_enabled():
+        import libsql
+
+        connection = libsql.connect(
+            database=os.environ["TURSO_DATABASE_URL"],
+            auth_token=os.environ["TURSO_AUTH_TOKEN"],
+            timeout=30.0,
+        )
+        connection.execute("PRAGMA foreign_keys = ON")
+        return connection
+
+    target = path or get_database_path()
+    target.parent.mkdir(parents=True, exist_ok=True)
+    if not target.exists() and SEED_DB_PATH.exists() and target.resolve() != SEED_DB_PATH.resolve():
+        shutil.copy2(SEED_DB_PATH, target)
     if readonly:
-        connection = sqlite3.connect(f"file:{db_path}?mode=ro", uri=True, timeout=30)
+        connection = sqlite3.connect(f"file:{target}?mode=ro", uri=True, timeout=30)
     else:
-        connection = sqlite3.connect(db_path, timeout=30)
+        connection = sqlite3.connect(target, timeout=30)
     connection.row_factory = sqlite3.Row
     connection.execute("PRAGMA foreign_keys = ON")
     connection.execute("PRAGMA busy_timeout = 30000")
@@ -40,10 +67,17 @@ def connect(path: Path | None = None, *, readonly: bool = False) -> sqlite3.Conn
     return connection
 
 
+def connect(path: Path | None = None, *, readonly: bool = False):
+    if not turso_enabled():
+        ensure_database_file(path)
+    return _open_connection(path, readonly=readonly)
+
+
 def initialize_database(path: Path | None = None) -> None:
-    target = path or get_database_path()
-    target.parent.mkdir(parents=True, exist_ok=True)
-    with sqlite3.connect(target) as con:
+    if not turso_enabled():
+        target = path or get_database_path()
+        target.parent.mkdir(parents=True, exist_ok=True)
+    with _open_connection(path, readonly=False) as con:
         con.execute("PRAGMA foreign_keys = ON")
         con.executescript(
             """
@@ -250,7 +284,7 @@ def _bool_int(value: Any) -> int | None:
 
 def import_run_bundle(
     *,
-    db_path: Path,
+    db_path: Path | None,
     metadata: dict[str, Any],
     prompts: list[dict[str, Any]],
     results: list[dict[str, Any]],
@@ -274,7 +308,7 @@ def import_run_bundle(
     key_by_prompt = {str(item["prompt_id"]): item for item in human_key}
     flat_by_prompt_model = {(str(row.get("prompt_id")), str(row.get("model_name"))): row for row in judge_rows}
 
-    with sqlite3.connect(db_path) as con:
+    with connect(db_path) as con:
         con.execute("PRAGMA foreign_keys = ON")
         con.execute(
             """
@@ -494,4 +528,6 @@ def table_rows(table: str, run_id: str | None = None, db_path: Path | None = Non
         query += " WHERE run_id = ?"
         params = (run_id,)
     with connect(db_path, readonly=True) as con:
-        return [dict(row) for row in con.execute(query, params).fetchall()]
+        cursor = con.execute(query, params)
+        columns = [item[0] for item in cursor.description or []]
+        return [dict(zip(columns, row)) for row in cursor.fetchall()]

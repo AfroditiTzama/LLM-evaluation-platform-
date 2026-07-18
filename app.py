@@ -3,15 +3,23 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-import sqlite3
 from pathlib import Path
 from typing import Any
 
 import pandas as pd
 import plotly.express as px
 import streamlit as st
+from dotenv import load_dotenv
 
-from database import connect, ensure_database_file, get_database_path, import_run_bundle
+
+from database import (
+    connect,
+    database_label,
+    ensure_database_file,
+    get_database_path,
+    import_run_bundle,
+    turso_enabled,
+)
 from reporting import (
     create_group_summary,
     create_model_summary,
@@ -20,6 +28,8 @@ from reporting import (
     flatten_judgments,
     recalculate_results,
 )
+
+load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env", override=True)
 
 st.set_page_config(
     page_title="LLM Evaluation — Qwen vs Gemma",
@@ -60,6 +70,8 @@ def query_df(query: str, params: tuple[Any, ...] = (), db_mtime: float = 0.0) ->
 
 
 def db_mtime() -> float:
+    if turso_enabled() or DB_PATH is None:
+        return 0.0
     return DB_PATH.stat().st_mtime if DB_PATH.exists() else 0.0
 
 
@@ -100,7 +112,7 @@ run_options = runs["run_id"].tolist()
 selected_run = st.sidebar.selectbox("Benchmark run", run_options)
 run_info = runs[runs["run_id"] == selected_run].iloc[0]
 
-st.sidebar.caption(f"Database: `{DB_PATH}`")
+st.sidebar.caption(f"Database: `{database_label(DB_PATH)}`")
 st.sidebar.caption(f"Dataset v{run_info['dataset_version']} · {run_info['execution_mode']}")
 
 st.title("LLM Evaluation Platform")

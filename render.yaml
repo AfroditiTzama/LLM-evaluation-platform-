@@ -1,19 +1,17 @@
 services:
   - type: web
-    name: llm-evaluation-sqlite
+    name: llm-evaluation-platform
     runtime: python
-    plan: starter
+    plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: python -m streamlit run app.py --server.address 0.0.0.0 --server.port $PORT --server.headless true
     healthCheckPath: /
     envVars:
       - key: PYTHON_VERSION
         value: 3.12.8
-      - key: DATABASE_PATH
-        value: /var/data/llm_eval.db
+      - key: TURSO_DATABASE_URL
+        sync: false
+      - key: TURSO_AUTH_TOKEN
+        sync: false
       - key: APP_PASSWORD
         sync: false
-    disk:
-      name: llm-evaluation-data
-      mountPath: /var/data
-      sizeGB: 1
