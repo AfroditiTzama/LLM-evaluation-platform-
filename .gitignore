@@ -1,8 +1,13 @@
 .env
+.venv/
+venv/
 __pycache__/
-*.pyc
-llm_eval.db
-runs/
-uploaded_prompts/
+*.py[cod]
 .DS_Store
 .streamlit/secrets.toml
+results/
+data/*.db
+data/*.db-shm
+data/*.db-wal
+# Keep the bundled seed database in version control.
+!seed/llm_eval_seed.db

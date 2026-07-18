@@ -1,0 +1,16 @@
+# Optional read-only-style demo configuration.
+# Runtime writes are ephemeral and can disappear after a restart or redeploy.
+services:
+  - type: web
+    name: llm-evaluation-sqlite-demo
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python -m streamlit run app.py --server.address 0.0.0.0 --server.port $PORT --server.headless true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.8
+      - key: DATABASE_PATH
+        value: /tmp/llm_eval.db
+      - key: APP_PASSWORD
+        sync: false

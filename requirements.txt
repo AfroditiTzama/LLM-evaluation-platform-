@@ -1,8 +1,7 @@
-streamlit
-pandas
-numpy
-plotly
-requests
-python-dotenv
-SQLAlchemy
-psycopg2-binary
+requests>=2.32.0
+python-dotenv>=1.0.1
+pandas>=2.2.0
+plotly>=5.24.0
+streamlit>=1.40.0
+PyYAML>=6.0.2
+jsonschema>=4.23.0

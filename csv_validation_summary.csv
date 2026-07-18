@@ -1,7 +1,0 @@
-﻿source_file,model,rows,unique_prompt_ids,errors,empty_answers
-chat_logs_minimax_m2.5.csv,minimax/minimax-m2.5,180,180,0,15
-chat_logs_minimax_m2.7.csv,minimax/minimax-m2.7,180,180,0,1
-chat_logs_minimax_m3.csv,minimax/minimax-m3,180,180,0,2
-chat_logs_qwen3.6_plus.csv,qwen/qwen3.6-plus,180,180,1,1
-chat_logs_qwen3.7_max.csv,qwen/qwen3.7-max,180,180,10,10
-chat_logs_qwen3.7_plus.csv,qwen/qwen3.7-plus,180,180,1,1
