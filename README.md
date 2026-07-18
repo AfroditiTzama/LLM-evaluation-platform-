@@ -1,4 +1,4 @@
-# Greek LLM Evaluation Platform — SQLite Edition
+# LLM Evaluation Platform — SQLite 
 
 A hosted Streamlit platform for comparing **Qwen 3.6 27B** and **Gemma 4 31B Instruct** on a research-inspired Greek benchmark.
 
