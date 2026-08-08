@@ -13,6 +13,23 @@ A research-inspired evaluation platform for comparing large language models on *
 
 ---
 
+## Two evaluation workflows
+
+The repository keeps the completed benchmark fully compatible while adding a reusable evaluation framework:
+
+| Workflow | Purpose |
+|---|---|
+| **Overview & previous benchmark** | Explore the preserved 120-prompt Qwen–Gemma benchmark, corrected reports, judge results, and human-review workflow. |
+| **Extensible evaluation framework** | Run and compare selected models, tasks, datasets, and versioned prompt strategies through the new multipage UI or CLI. |
+
+The framework follows the explicit experiment model:
+
+```text
+Model × Task × Prompt Strategy × Dataset → Evaluation Run → Metrics
+```
+
+Each new run stores immutable configuration snapshots, per-example outputs, task-specific quality metrics, latency, tokens, provider metadata, and provider-reported cost. It does not collapse unrelated task metrics into a misleading universal score.
+
 ## Project overview
 
 The platform evaluates model quality and operational performance through multiple complementary layers:
@@ -24,12 +41,6 @@ The platform evaluates model quality and operational performance through multipl
 5. **Blind human evaluation** — a balanced, stratified 30-prompt sample.
 
 The benchmark contains **120 newly authored Greek prompts**. It is inspired by public evaluation methodologies rather than copied verbatim from benchmark datasets.
-
-The repository also contains an additive, provider-neutral framework foundation for the general model:
-
-```text
-Model × Task × Prompt Strategy × Dataset → Evaluation Run → Metrics
-```
 
 It adds versioned catalogs, immutable run snapshots, task-specific evaluator resolution, common performance/cost metrics, aggregate statistics, Pareto comparisons, and an additive database migration while keeping the completed benchmark path backward compatible. See [ARCHITECTURE.md](ARCHITECTURE.md) for the repository audit, file-level design, migration plan, evaluator status, and UI integration plan.
 
@@ -201,7 +212,17 @@ python -m pip install -r requirements.txt
 cp .env.example .env
 ```
 
-For the preloaded local SQLite demo, no cloud database credentials are required. The first launch copies the seed database to `data/llm_eval.db`.
+For local SQLite mode, keep the Turso settings empty:
+
+```env
+OPENROUTER_API_KEY=
+APP_PASSWORD=
+DATABASE_PATH=data/llm_eval.db
+TURSO_DATABASE_URL=
+TURSO_AUTH_TOKEN=
+```
+
+`OPENROUTER_API_KEY` is required only when starting new provider requests. A blank `APP_PASSWORD` disables local sign-in. The first launch copies the bundled seed database to `data/llm_eval.db`.
 
 ### 3. Start the dashboard
 
@@ -218,7 +239,7 @@ Use the Streamlit sidebar to open:
 - **Framework Results** — inspect leaderboards, trade-offs, failures, and examples.
 - **Prompt Comparison** — compare prompt strategy versions on the same model and input.
 
-The run builder starts with one model, two prompt strategies, and a 500-token output limit. It shows the exact request calculation, rejects placeholder API keys, and keeps Run Evaluation disabled until the potentially paid request count is explicitly confirmed.
+The run builder starts with one model, two prompt strategies, and a 500-token output limit. It shows the exact request calculation (`models × prompt strategies × examples`), rejects placeholder API keys, and keeps Run Evaluation disabled until the potentially paid request count is explicitly confirmed.
 
 ## Environment variables
 
@@ -279,7 +300,7 @@ Only tasks whose evaluator is marked `runnable` by the catalog command can execu
 ## Tests
 
 ```bash
-python -m unittest discover -v
+python -m unittest discover -s tests -v
 ```
 
 ## Rebuild an existing run without API calls
