@@ -1,0 +1,28 @@
+[
+  {
+    "id": "qwen/qwen3.6-27b",
+    "name": "Qwen 3.6 27B",
+    "provider": "openrouter",
+    "context_window": null,
+    "input_price_per_million": null,
+    "output_price_per_million": null,
+    "reasoning_support": true,
+    "metadata": {
+      "source": "legacy benchmark configuration",
+      "pricing_status": "provider_reported_at_runtime"
+    }
+  },
+  {
+    "id": "google/gemma-4-31b-it",
+    "name": "Gemma 4 31B Instruct",
+    "provider": "openrouter",
+    "context_window": null,
+    "input_price_per_million": null,
+    "output_price_per_million": null,
+    "reasoning_support": false,
+    "metadata": {
+      "source": "legacy benchmark configuration",
+      "pricing_status": "provider_reported_at_runtime"
+    }
+  }
+]

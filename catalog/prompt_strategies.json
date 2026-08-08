@@ -1,0 +1,93 @@
+[
+  {
+    "id": "basic-zero-shot-el",
+    "name": "Basic zero-shot — Greek",
+    "strategy_type": "zero_shot",
+    "version": "1",
+    "system_prompt": "Ακολούθησε την οδηγία του χρήστη.",
+    "user_prompt_template": "{input}",
+    "language": "el",
+    "variables": ["input"]
+  },
+  {
+    "id": "optimized-grounded-el",
+    "name": "Optimized grounded — Greek",
+    "strategy_type": "optimized",
+    "version": "1",
+    "system_prompt": "Ακολούθησε πιστά όλες τις οδηγίες. Μην προσθέτεις πληροφορίες που δεν προκύπτουν από τα δεδομένα. Διατήρησε αριθμούς, περιορισμούς και αβεβαιότητες.",
+    "user_prompt_template": "Εκτέλεσε προσεκτικά το παρακάτω task. Έλεγξε τη μορφή και όλους τους ρητούς περιορισμούς πριν απαντήσεις.\n\n{input}",
+    "language": "el",
+    "variables": ["input"]
+  },
+  {
+    "id": "basic-zero-shot-en",
+    "name": "Basic zero-shot — English instruction",
+    "strategy_type": "zero_shot",
+    "version": "1",
+    "system_prompt": "Follow the user's instruction exactly and do not invent unsupported information.",
+    "user_prompt_template": "Complete the following task and answer in the language it requests:\n\n{input}",
+    "language": "en",
+    "variables": ["input"]
+  },
+  {
+    "id": "few-shot-el",
+    "name": "Few-shot — Greek",
+    "strategy_type": "few_shot",
+    "version": "1",
+    "system_prompt": "Ακολούθησε το μοτίβο των παραδειγμάτων χωρίς να αντιγράφεις άσχετο περιεχόμενο.",
+    "user_prompt_template": "Παραδείγματα:\n{examples}\n\nΝέο task:\n{input}",
+    "language": "el",
+    "variables": ["input", "examples"]
+  },
+  {
+    "id": "role-expert-el",
+    "name": "Expert role/system prompt — Greek",
+    "strategy_type": "role_system",
+    "version": "1",
+    "system_prompt": "Είσαι έμπειρος αξιολογητής και αναλυτής. Δώσε ακριβή, τεκμηριωμένη απάντηση στη ζητούμενη μορφή και γλώσσα.",
+    "user_prompt_template": "{input}",
+    "language": "el",
+    "variables": ["input"]
+  },
+  {
+    "id": "explicit-constraints-el",
+    "name": "Explicit constraints — Greek",
+    "strategy_type": "explicit_constraints",
+    "version": "1",
+    "system_prompt": "Η συμμόρφωση με όλους τους ρητούς περιορισμούς είναι υποχρεωτική.",
+    "user_prompt_template": "Task:\n{input}\n\nΠριν δώσεις την τελική απάντηση, έλεγξε εσωτερικά: περιεχόμενο, πραγματολογική στήριξη, μήκος και ζητούμενη μορφή. Επίστρεψε μόνο την τελική απάντηση.",
+    "language": "el",
+    "variables": ["input"]
+  },
+  {
+    "id": "structured-json-el",
+    "name": "Structured JSON — Greek",
+    "strategy_type": "structured_output",
+    "version": "1",
+    "system_prompt": "Επίστρεψε αποκλειστικά έγκυρο JSON χωρίς Markdown fences ή πρόσθετο κείμενο.",
+    "user_prompt_template": "{input}",
+    "language": "el",
+    "variables": ["input"],
+    "metadata": {"requires_task_schema": true}
+  },
+  {
+    "id": "decomposition-el",
+    "name": "Decomposition — Greek",
+    "strategy_type": "decomposition",
+    "version": "1",
+    "system_prompt": "Ανάλυσε το task σε μικρά βήματα, αλλά εμφάνισε μόνο την τελική ζητούμενη απάντηση.",
+    "user_prompt_template": "{input}",
+    "language": "el",
+    "variables": ["input"]
+  },
+  {
+    "id": "critique-revise-el",
+    "name": "Critique + revise — Greek",
+    "strategy_type": "critique_revise",
+    "version": "1",
+    "system_prompt": "Δημιούργησε εσωτερικά ένα πρώτο σχέδιο, εντόπισε σφάλματα ή παραβιάσεις περιορισμών και διόρθωσέ το. Εμφάνισε μόνο την αναθεωρημένη τελική απάντηση.",
+    "user_prompt_template": "{input}",
+    "language": "el",
+    "variables": ["input"]
+  }
+]

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 from pathlib import Path
@@ -28,37 +27,22 @@ from reporting import (
     flatten_judgments,
     recalculate_results,
 )
+from llm_eval.streamlit_auth import check_password
+from llm_eval.streamlit_ui import apply_ui_style, render_sidebar_navigation
 
 load_dotenv(dotenv_path=Path(__file__).resolve().parent / ".env", override=True)
 
 st.set_page_config(
-    page_title="LLM Evaluation — Qwen vs Gemma",
-    page_icon="🧪",
+    page_title="Overview · LLM Evaluation Platform",
     layout="wide",
 )
-
-
-def check_password() -> bool:
-    expected = os.getenv("APP_PASSWORD", "").strip()
-    if not expected:
-        return True
-    if st.session_state.get("authenticated"):
-        return True
-
-    st.title("LLM Evaluation Platform")
-    st.caption("Password-protected benchmark dashboard")
-    password = st.text_input("Application password", type="password")
-    if st.button("Sign in", type="primary"):
-        if hashlib.sha256(password.encode()).digest() == hashlib.sha256(expected.encode()).digest():
-            st.session_state["authenticated"] = True
-            st.rerun()
-        st.error("Incorrect password.")
-    return False
 
 
 if not check_password():
     st.stop()
 
+apply_ui_style()
+render_sidebar_navigation("overview")
 DB_PATH = ensure_database_file(get_database_path())
 
 
@@ -112,13 +96,18 @@ run_options = runs["run_id"].tolist()
 selected_run = st.sidebar.selectbox("Benchmark run", run_options)
 run_info = runs[runs["run_id"] == selected_run].iloc[0]
 
+st.sidebar.markdown("### Previous benchmark")
 st.sidebar.caption(f"Database: `{database_label(DB_PATH)}`")
 st.sidebar.caption(f"Dataset v{run_info['dataset_version']} · {run_info['execution_mode']}")
 
-st.title("LLM Evaluation Platform")
+st.title("Overview & Previous Benchmark")
 st.caption(
-    "Research-inspired Greek benchmark comparing Qwen 3.6 27B and Gemma 4 31B Instruct. "
-    "Results combine deterministic checks, an independent blind LLM judge, latency, tokens, cost and provider metadata."
+    "Explore the original Qwen–Gemma benchmark saved with this repository. "
+    "To create a new evaluation, open Run Evaluation from the sidebar."
+)
+st.info(
+    "This page shows the repository's previous benchmark. New runs are stored separately and appear under "
+    "Framework Results and Prompt Comparison."
 )
 
 model_summary = load_summary("model_summary", selected_run)

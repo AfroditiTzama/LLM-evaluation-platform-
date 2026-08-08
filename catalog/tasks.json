@@ -1,0 +1,157 @@
+[
+  {
+    "id": "summarization",
+    "name": "Summarization",
+    "description": "Preserve the central message, important facts, relationships and limitations while remaining concise.",
+    "task_type": "generation",
+    "evaluator_type": "summarization_rubric",
+    "evaluator_version": "1.0",
+    "supported_metrics": ["central_message_preservation", "key_information_coverage", "factual_accuracy", "logical_relationship_preservation", "uncertainty_preservation", "hallucination", "coherence", "conciseness"],
+    "metadata": {"implementation_status": "planned_evaluator"}
+  },
+  {
+    "id": "bullet_points",
+    "name": "Bullet / key-point generation",
+    "description": "Generate concise, non-redundant key points in the requested structure.",
+    "task_type": "generation",
+    "evaluator_type": "bullet_points_rubric",
+    "evaluator_version": "1.0",
+    "supported_metrics": ["key_point_coverage", "factuality", "redundancy", "structure", "clarity", "format_compliance"],
+    "metadata": {"implementation_status": "planned_evaluator"}
+  },
+  {
+    "id": "information_extraction",
+    "name": "Information extraction",
+    "description": "Extract requested facts from supplied content.",
+    "task_type": "extraction",
+    "evaluator_type": "structured_output",
+    "evaluator_version": "1.0",
+    "supported_metrics": ["strict_exact_match", "normalized_exact_match", "field_precision", "field_recall", "field_f1"]
+  },
+  {
+    "id": "structured_output",
+    "name": "Structured JSON extraction",
+    "description": "Produce syntactically valid, schema-compliant structured output.",
+    "task_type": "extraction",
+    "evaluator_type": "structured_output",
+    "evaluator_version": "1.0",
+    "supported_metrics": ["syntax_valid", "schema_valid", "format_compliance", "strict_exact_match"]
+  },
+  {
+    "id": "classification",
+    "name": "Classification",
+    "description": "Choose one label from a defined label set.",
+    "task_type": "classification",
+    "evaluator_type": "classification",
+    "evaluator_version": "1.0",
+    "supported_metrics": ["accuracy", "precision", "recall", "f1", "confusion_matrix", "label_valid"]
+  },
+  {
+    "id": "question_answering",
+    "name": "Question answering",
+    "description": "Answer questions with or without a reference answer.",
+    "task_type": "qa",
+    "evaluator_type": "exact_match",
+    "evaluator_version": "1.0",
+    "supported_metrics": ["strict_exact_match", "normalized_exact_match"]
+  },
+  {
+    "id": "retrieval_rag",
+    "name": "Retrieval / RAG evaluation",
+    "description": "Evaluate retrieval relevance, answer correctness and grounding.",
+    "task_type": "rag",
+    "evaluator_type": "rag_rubric",
+    "evaluator_version": "1.0",
+    "supported_metrics": ["retrieval_precision", "retrieval_recall", "answer_relevance", "faithfulness", "citation_correctness"],
+    "metadata": {"implementation_status": "planned_evaluator"}
+  },
+  {
+    "id": "logical_reasoning",
+    "name": "Reasoning",
+    "description": "Solve logical and multi-step reasoning tasks.",
+    "task_type": "reasoning",
+    "evaluator_type": "exact_match",
+    "evaluator_version": "1.0",
+    "supported_metrics": ["strict_exact_match", "normalized_exact_match", "task_success"]
+  },
+  {
+    "id": "coding",
+    "name": "Coding",
+    "description": "Generate or repair executable code.",
+    "task_type": "coding",
+    "evaluator_type": "code_execution",
+    "evaluator_version": "1.0",
+    "supported_metrics": ["pass_at_1", "tests_passed", "syntax_valid", "execution_success"],
+    "metadata": {"implementation_status": "planned_sandboxed_evaluator"}
+  },
+  {
+    "id": "tabular_cleaning",
+    "name": "Spreadsheet / tabular cleaning",
+    "description": "Correct tabular errors while preserving valid values and schema.",
+    "task_type": "tabular",
+    "evaluator_type": "tabular_cleaning",
+    "evaluator_version": "1.0",
+    "supported_metrics": ["correct_fixes", "missed_fixes", "wrong_fixes", "unnecessary_changes", "precision", "recall", "f1", "exact_match", "schema_preservation"],
+    "metadata": {"implementation_status": "planned_evaluator"}
+  },
+  {
+    "id": "translation",
+    "name": "Translation",
+    "description": "Translate while preserving meaning, register and terminology.",
+    "task_type": "translation",
+    "evaluator_type": "translation_rubric",
+    "evaluator_version": "1.0",
+    "supported_metrics": ["adequacy", "fluency", "terminology", "comet", "chrf"],
+    "metadata": {"implementation_status": "planned_evaluator"}
+  },
+  {
+    "id": "greek_language_quality",
+    "name": "Greek-language quality",
+    "description": "Evaluate grammaticality, naturalness, clarity and register in Greek.",
+    "task_type": "language_quality",
+    "evaluator_type": "greek_quality_rubric",
+    "evaluator_version": "1.0",
+    "supported_metrics": ["grammar", "naturalness", "clarity", "register", "terminology"],
+    "metadata": {"implementation_status": "planned_evaluator"}
+  },
+  {
+    "id": "hallucination_factuality",
+    "name": "Hallucination / factuality",
+    "description": "Measure whether substantive claims are supported by the supplied evidence.",
+    "task_type": "factuality",
+    "evaluator_type": "factuality_rubric",
+    "evaluator_version": "1.0",
+    "supported_metrics": ["factual_precision", "claim_support", "hallucination_rate"],
+    "metadata": {"implementation_status": "planned_evaluator"}
+  },
+  {
+    "id": "long_context",
+    "name": "Long-context handling",
+    "description": "Evaluate retrieval and reasoning over long inputs.",
+    "task_type": "long_context",
+    "evaluator_type": "long_context_rubric",
+    "evaluator_version": "1.0",
+    "supported_metrics": ["answer_accuracy", "evidence_recall", "position_robustness"],
+    "metadata": {"implementation_status": "planned_evaluator"}
+  },
+  {
+    "id": "document_understanding",
+    "name": "Document understanding",
+    "description": "Extract and reason over document content and structure.",
+    "task_type": "document",
+    "evaluator_type": "document_rubric",
+    "evaluator_version": "1.0",
+    "supported_metrics": ["field_accuracy", "layout_understanding", "answer_accuracy"],
+    "metadata": {"implementation_status": "planned_evaluator"}
+  },
+  {
+    "id": "tool_use",
+    "name": "Tool-use / agentic tasks",
+    "description": "Evaluate tool selection, arguments, execution outcome and efficiency.",
+    "task_type": "agentic",
+    "evaluator_type": "tool_use",
+    "evaluator_version": "1.0",
+    "supported_metrics": ["task_success", "tool_selection_accuracy", "argument_accuracy", "steps", "cost"],
+    "metadata": {"implementation_status": "planned_evaluator"}
+  }
+]

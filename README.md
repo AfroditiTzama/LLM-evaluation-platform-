@@ -25,6 +25,14 @@ The platform evaluates model quality and operational performance through multipl
 
 The benchmark contains **120 newly authored Greek prompts**. It is inspired by public evaluation methodologies rather than copied verbatim from benchmark datasets.
 
+The repository also contains an additive, provider-neutral framework foundation for the general model:
+
+```text
+Model × Task × Prompt Strategy × Dataset → Evaluation Run → Metrics
+```
+
+It adds versioned catalogs, immutable run snapshots, task-specific evaluator resolution, common performance/cost metrics, aggregate statistics, Pareto comparisons, and an additive database migration while keeping the completed benchmark path backward compatible. See [ARCHITECTURE.md](ARCHITECTURE.md) for the repository audit, file-level design, migration plan, evaluator status, and UI integration plan.
+
 ## Benchmark design
 
 | Component | Design |
@@ -132,6 +140,11 @@ The Streamlit dashboard provides:
 - Human–judge agreement analysis
 - Methodology and limitations section
 - Local/admin import of completed benchmark runs
+- A multipage **Run Evaluation** builder for model/task/dataset/prompt strategy selection
+- A framework leaderboard with model, prompt and difficulty filters
+- Explicit task-quality selection, quality–cost Pareto charts, and run telemetry
+- Per-example input, reference, output, immutable rendered prompt, and metric drill-down
+- Side-by-side prompt strategy comparison with token, latency, cost, and quality deltas
 
 ## Technology stack
 
@@ -151,15 +164,21 @@ The Streamlit dashboard provides:
 .
 ├── app.py                    # Streamlit dashboard
 ├── main.py                   # Benchmark and independent-judge pipeline
+├── framework_cli.py          # Opt-in extensible framework runner
 ├── evaluation.py             # Deterministic and structured-output checks
 ├── reporting.py              # Summaries, confidence intervals, human sample
 ├── database.py               # Local SQLite and remote Turso integration
+├── llm_eval/                 # Domain, registries, providers, pipeline, persistence
+├── catalog/                  # Versioned models, tasks, prompt strategies
+├── pages/                    # Run builder, framework results, prompt comparison
+├── tests/                    # Framework and compatibility tests
 ├── rebuild_existing_run.py   # Rebuild reports without new API calls
 ├── benchmark_prompts.json    # 120-prompt Greek benchmark
 ├── seed/
 │   └── llm_eval_seed.db      # Preloaded local demo database
 ├── render.yaml               # Free Render Blueprint configuration
 ├── DEPLOY_RENDER.md          # Deployment guide
+├── ARCHITECTURE.md            # Audit and extensible framework design
 ├── CORRECTIONS.md            # Benchmark v1.1 correction log
 ├── requirements.txt
 └── .env.example
@@ -192,6 +211,15 @@ python -m streamlit run app.py
 
 Open `http://localhost:8501`.
 
+Use the Streamlit sidebar to open:
+
+- **Overview & previous benchmark** — inspect the preloaded legacy Qwen–Gemma benchmark.
+- **Run Evaluation** — configure and confirm a new framework run.
+- **Framework Results** — inspect leaderboards, trade-offs, failures, and examples.
+- **Prompt Comparison** — compare prompt strategy versions on the same model and input.
+
+The run builder starts with one model, two prompt strategies, and a 500-token output limit. It shows the exact request calculation, rejects placeholder API keys, and keeps Run Evaluation disabled until the potentially paid request count is explicitly confirmed.
+
 ## Environment variables
 
 | Variable | Required | Purpose |
@@ -223,6 +251,36 @@ The CLI supports:
 4. Connection testing
 
 A complete two-model run includes up to **240 model requests** and **120 judge requests**.
+
+## Run an extensible framework slice
+
+Inspect the versioned catalogs and evaluator implementation status without making requests:
+
+```bash
+python framework_cli.py catalog
+```
+
+The new runner accepts multiple models and prompt strategy versions. It reports the exact paid-request count and refuses to call the provider until `--yes` is supplied:
+
+```bash
+python framework_cli.py run \
+  --task structured_output \
+  --model qwen/qwen3.6-27b \
+  --model google/gemma-4-31b-it \
+  --prompt-strategy basic-zero-shot-el@1 \
+  --prompt-strategy optimized-grounded-el@1 \
+  --dataset-file benchmark_prompts.json \
+  --database data/llm_eval.db \
+  --yes
+```
+
+Only tasks whose evaluator is marked `runnable` by the catalog command can execute. Planned task-specific evaluators fail before provider requests rather than emitting placeholder quality scores.
+
+## Tests
+
+```bash
+python -m unittest discover -v
+```
 
 ## Rebuild an existing run without API calls
 

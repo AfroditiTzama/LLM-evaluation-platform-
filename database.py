@@ -10,6 +10,186 @@ from typing import Any, Iterable
 BASE_DIR = Path(__file__).resolve().parent
 DEFAULT_DB_PATH = BASE_DIR / "data" / "llm_eval.db"
 SEED_DB_PATH = BASE_DIR / "seed" / "llm_eval_seed.db"
+EXTENSIBLE_SCHEMA_MIGRATION_ID = "001_extensible_evaluation_framework"
+
+
+EXTENSIBLE_SCHEMA_SQL = """
+CREATE TABLE IF NOT EXISTS models (
+    model_key TEXT PRIMARY KEY,
+    model_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    provider TEXT NOT NULL,
+    context_window INTEGER,
+    input_price_per_million REAL,
+    output_price_per_million REAL,
+    reasoning_support INTEGER NOT NULL DEFAULT 0,
+    metadata_json TEXT NOT NULL,
+    snapshot_json TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS tasks (
+    task_id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    task_type TEXT NOT NULL,
+    evaluator_type TEXT NOT NULL,
+    evaluator_version TEXT NOT NULL,
+    supported_metrics_json TEXT NOT NULL,
+    metadata_json TEXT NOT NULL,
+    snapshot_json TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS datasets (
+    dataset_id TEXT NOT NULL,
+    version TEXT NOT NULL,
+    task_id TEXT NOT NULL,
+    name TEXT NOT NULL,
+    language TEXT,
+    domain TEXT,
+    record_count INTEGER NOT NULL,
+    provenance_json TEXT NOT NULL,
+    metadata_json TEXT NOT NULL,
+    snapshot_json TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (dataset_id, version),
+    FOREIGN KEY (task_id) REFERENCES tasks(task_id)
+);
+
+CREATE TABLE IF NOT EXISTS dataset_records (
+    dataset_id TEXT NOT NULL,
+    dataset_version TEXT NOT NULL,
+    record_id TEXT NOT NULL,
+    input_json TEXT NOT NULL,
+    reference_json TEXT,
+    language TEXT,
+    difficulty TEXT,
+    domain TEXT,
+    variables_json TEXT NOT NULL,
+    provenance_json TEXT NOT NULL,
+    metadata_json TEXT NOT NULL,
+    snapshot_json TEXT NOT NULL,
+    PRIMARY KEY (dataset_id, dataset_version, record_id),
+    FOREIGN KEY (dataset_id, dataset_version) REFERENCES datasets(dataset_id, version) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS prompt_strategies (
+    strategy_id TEXT NOT NULL,
+    version TEXT NOT NULL,
+    name TEXT NOT NULL,
+    strategy_type TEXT NOT NULL,
+    system_prompt TEXT NOT NULL,
+    user_prompt_template TEXT NOT NULL,
+    language TEXT,
+    variables_json TEXT NOT NULL,
+    metadata_json TEXT NOT NULL,
+    snapshot_json TEXT NOT NULL,
+    created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (strategy_id, version)
+);
+
+CREATE TABLE IF NOT EXISTS evaluation_runs (
+    run_id TEXT PRIMARY KEY,
+    task_id TEXT NOT NULL,
+    dataset_id TEXT NOT NULL,
+    dataset_version TEXT NOT NULL,
+    status TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    started_at TEXT,
+    ended_at TEXT,
+    generation_settings_json TEXT NOT NULL,
+    evaluator_type TEXT NOT NULL,
+    evaluator_version TEXT NOT NULL,
+    metric_configuration_json TEXT NOT NULL,
+    spec_snapshot_json TEXT NOT NULL,
+    metadata_json TEXT NOT NULL,
+    FOREIGN KEY (task_id) REFERENCES tasks(task_id),
+    FOREIGN KEY (dataset_id, dataset_version) REFERENCES datasets(dataset_id, version)
+);
+
+CREATE TABLE IF NOT EXISTS evaluation_run_models (
+    run_id TEXT NOT NULL,
+    model_key TEXT NOT NULL,
+    model_snapshot_json TEXT NOT NULL,
+    PRIMARY KEY (run_id, model_key),
+    FOREIGN KEY (run_id) REFERENCES evaluation_runs(run_id) ON DELETE CASCADE,
+    FOREIGN KEY (model_key) REFERENCES models(model_key)
+);
+
+CREATE TABLE IF NOT EXISTS evaluation_run_prompt_strategies (
+    run_id TEXT NOT NULL,
+    strategy_id TEXT NOT NULL,
+    strategy_version TEXT NOT NULL,
+    prompt_strategy_snapshot_json TEXT NOT NULL,
+    PRIMARY KEY (run_id, strategy_id, strategy_version),
+    FOREIGN KEY (run_id) REFERENCES evaluation_runs(run_id) ON DELETE CASCADE,
+    FOREIGN KEY (strategy_id, strategy_version) REFERENCES prompt_strategies(strategy_id, version)
+);
+
+CREATE TABLE IF NOT EXISTS evaluation_results (
+    result_id TEXT PRIMARY KEY,
+    run_id TEXT NOT NULL,
+    record_id TEXT NOT NULL,
+    model_key TEXT NOT NULL,
+    task_id TEXT NOT NULL,
+    dataset_id TEXT NOT NULL,
+    dataset_version TEXT NOT NULL,
+    prompt_strategy_id TEXT NOT NULL,
+    prompt_strategy_version TEXT NOT NULL,
+    status TEXT NOT NULL,
+    provider TEXT,
+    resolved_model_id TEXT,
+    raw_input_json TEXT NOT NULL,
+    raw_output TEXT,
+    reference_json TEXT,
+    system_prompt_snapshot TEXT NOT NULL,
+    user_prompt_snapshot TEXT NOT NULL,
+    model_snapshot_json TEXT NOT NULL,
+    task_snapshot_json TEXT NOT NULL,
+    dataset_snapshot_json TEXT NOT NULL,
+    prompt_strategy_snapshot_json TEXT NOT NULL,
+    generation_settings_snapshot_json TEXT NOT NULL,
+    evaluator_version TEXT NOT NULL,
+    metric_configuration_snapshot_json TEXT NOT NULL,
+    input_tokens INTEGER NOT NULL DEFAULT 0,
+    output_tokens INTEGER NOT NULL DEFAULT 0,
+    total_tokens INTEGER NOT NULL DEFAULT 0,
+    cost_usd REAL,
+    end_to_end_seconds REAL,
+    provider_request_seconds REAL,
+    time_to_first_token_seconds REAL,
+    generation_seconds REAL,
+    inter_token_latency_seconds REAL,
+    error TEXT,
+    created_at TEXT NOT NULL,
+    metadata_json TEXT NOT NULL,
+    FOREIGN KEY (run_id) REFERENCES evaluation_runs(run_id) ON DELETE CASCADE,
+    FOREIGN KEY (model_key) REFERENCES models(model_key),
+    FOREIGN KEY (dataset_id, dataset_version, record_id)
+        REFERENCES dataset_records(dataset_id, dataset_version, record_id),
+    FOREIGN KEY (prompt_strategy_id, prompt_strategy_version)
+        REFERENCES prompt_strategies(strategy_id, version)
+);
+
+CREATE INDEX IF NOT EXISTS idx_evaluation_results_run ON evaluation_results(run_id);
+CREATE INDEX IF NOT EXISTS idx_evaluation_results_matrix
+    ON evaluation_results(run_id, task_id, model_key, prompt_strategy_id, prompt_strategy_version);
+
+CREATE TABLE IF NOT EXISTS metric_values (
+    result_id TEXT NOT NULL,
+    metric_name TEXT NOT NULL,
+    value_real REAL,
+    value_text TEXT,
+    value_type TEXT NOT NULL,
+    unit TEXT,
+    metadata_json TEXT NOT NULL,
+    PRIMARY KEY (result_id, metric_name),
+    FOREIGN KEY (result_id) REFERENCES evaluation_results(result_id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_metric_values_name ON metric_values(metric_name, value_real);
+"""
 
 
 def turso_enabled() -> bool:
@@ -269,7 +449,30 @@ def initialize_database(path: Path | None = None) -> None:
             );
             """
         )
+        _apply_schema_migrations(con)
         con.commit()
+
+
+def _apply_schema_migrations(con: Any) -> None:
+    con.execute(
+        """
+        CREATE TABLE IF NOT EXISTS schema_migrations (
+            migration_id TEXT PRIMARY KEY,
+            applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
+    applied = con.execute(
+        "SELECT 1 FROM schema_migrations WHERE migration_id = ?",
+        (EXTENSIBLE_SCHEMA_MIGRATION_ID,),
+    ).fetchone()
+    if applied:
+        return
+    con.executescript(EXTENSIBLE_SCHEMA_SQL)
+    con.execute(
+        "INSERT INTO schema_migrations(migration_id) VALUES (?)",
+        (EXTENSIBLE_SCHEMA_MIGRATION_ID,),
+    )
 
 
 def _json(value: Any) -> str:
